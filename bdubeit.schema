@@ -1,0 +1,69 @@
+# LDAP schema for these trying times.
+#
+# 1.3.6.1.4.1.58044         Brian Dube IT
+# 1.3.6.1.4.1.58044.1       bdubeit.com organization
+# 1.3.6.1.4.1.58044.1.1     SNMP
+# 1.3.6.1.4.1.58044.1.2     LDAP
+# 1.3.6.1.4.1.58044.1.2.1   LDAP attributes
+# 1.3.6.1.4.1.58044.1.2.2   LDAP classes
+#
+# Depends on:
+#   - core
+#   - cosine
+#   - system
+
+# Alternative email addresses to be maintained by the owner.
+# The mail attribute from class inetOrgPerson should not be
+# writable by the owner when used by applications for
+# authentication and authorization purposes.
+# Inspired by The Apache Software Foundation's schema.
+attributetype ( 1.3.6.1.4.1.58044.1.2.1.1 NAME 'bdit-altMail'
+	DESC 'Single-value complement to RFC1274 mail attribute.'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{256}
+	USAGE userApplications )
+
+# Marks an entity as banned: authentications and authorizations
+# should fail for banned entities. The value of the attribute
+# can be a short description of the reason for the ban. For
+# record preservation purposes this is an alternative to
+# deleting entities that are no longer allowed access.
+# Inspired by The Apache Software Foundation's schema.
+attributetype ( 1.3.6.1.4.1.58044.1.2.1.2 NAME 'bdit-banned'
+	DESC 'Reason for banning the entity.'
+	EQUALITY caseIgnoreMatch
+	SUBSTR caseIgnoreSubstringsMatch
+	SYNTAX 1.3.6.1.4.1.1466.115.121.1.15{512}
+	SINGLE-VALUE
+	USAGE userApplications )
+
+# Class bdit-person is intended to supplement inetOrgPerson
+# entities with custom attributes.
+#
+# Attributes:
+#   ou            2.5.4.11  RFC2256
+#   bdit-altMail            this schema
+#   bdit-banned             this schema
+objectclass ( 1.3.6.1.4.1.58044.1.2.2.1 NAME 'bdit-person'
+	DESC 'Extra attributes to supplement RFC2798 inetOrgPerson.'
+	SUP top
+	AUXILIARY
+	MAY ( ou $ bdit-altMail $ bdit-banned ) )
+
+# RFC2256 groupOfNames entities can be tedious to maintain
+# because at least one member is always required. This
+# class uses MAY rather than MUST for members, allowing
+# empty groups.
+#
+# Attributes:
+#   cn           2.5.4.3   RFC4519
+#   member       2.5.4.31  RFC2256
+#   description  2.5.4.13  RFC4519
+#   owner        2.5.4.32  RFC2256
+objectclass ( 1.3.6.1.4.1.58044.1.2.2.2 NAME 'bdit-group'
+	DESC 'A flock of persons, alternative to RFC2256 groupOfNames.'
+	SUP top
+	STRUCTURAL
+	MUST ( cn )
+	MAY ( member $ description $ owner ) )
